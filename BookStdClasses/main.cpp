@@ -8,6 +8,40 @@
 
 typedef struct stat Stat_t;
 
+bool CompareString(const std::string_view &, const std::string_view &);
+
+bool CompareStringReversed(const std::string_view &, const std::string_view &);
+
+void FindLines(std::vector<std::string_view> &, char *, int);
+
+void WriteVector(std::vector<std::string_view> &, int);
+
+char *ReadFullBook(int &);
+
+int main() {
+
+  int length_of_book;
+  char *all_book = ReadFullBook(length_of_book);
+
+  std::vector<std::string_view> book;
+
+  FindLines(book, all_book, length_of_book);
+
+  int fd_out = open("out.txt", O_WRONLY | O_TRUNC);
+
+  std::sort(book.begin(), book.end(), CompareString);
+  WriteVector(book, fd_out);
+  write(fd_out, "-------------------------\n", 26);
+
+  std::sort(book.begin(), book.end(), CompareStringReversed);
+  WriteVector(book, fd_out);
+  write(fd_out, "-------------------------\n", 26);
+
+  write(fd_out, all_book, length_of_book);
+
+  close(fd_out);
+}
+
 void SkipSymbolsInc(const std::string_view &str, int &id) {
   while (id < str.size() && std::ispunct(str[id])) {
     ++id;
@@ -110,28 +144,4 @@ char *ReadFullBook(int &length_of_book) {
   close(fd_in);
 
   return all_book;
-}
-
-int main() {
-
-  int length_of_book;
-  char *all_book = ReadFullBook(length_of_book);
-
-  std::vector<std::string_view> book;
-
-  FindLines(book, all_book, length_of_book);
-
-  int fd_out = open("out.txt", O_WRONLY | O_TRUNC);
-
-  std::sort(book.begin(), book.end(), CompareString);
-  WriteVector(book, fd_out);
-  write(fd_out, "-------------------------\n", 26);
-
-  std::sort(book.begin(), book.end(), CompareStringReversed);
-  WriteVector(book, fd_out);
-  write(fd_out, "-------------------------\n", 26);
-
-  write(fd_out, all_book, length_of_book);
-
-  close(fd_out);
 }

@@ -151,10 +151,10 @@ void CheckAll(std::vector<T> &vector_from_std, ChunkedVector<T, 20> &chunked_vec
   }
 }
 
-const int MAX_FOR_RANDOM = 1e2;
+const int MAX_FOR_RANDOM = 1e5;
 
 TEST(ChunkedVector, AllOnInt) {
-  for (int time = 0; time < 100; ++time) {
+  for (int time = 0; time < 10; ++time) {
     std::random_device device;
     std::mt19937 random_generator(device());
     std::uniform_int_distribution<int> range(0, MAX_FOR_RANDOM);
@@ -198,7 +198,7 @@ TEST(ChunkedVector, AllOnInt) {
 }
 
 TEST(ChunkedVector, AllOnString) {
-  for (int time = 0; time < 100; ++time) {
+  for (int time = 0; time < 10; ++time) {
     std::random_device device;
     std::mt19937 random_generator(device());
     std::uniform_int_distribution<int> range(0, MAX_FOR_RANDOM);
@@ -242,7 +242,7 @@ TEST(STDVector, AllOnIntSpeedTest) {
   struct rusage rusage;
   getrusage(RUSAGE_SELF, &rusage);
 
-  for (int time = 0; time < 100; ++time) {
+  for (int time = 0; time < 10; ++time) {
     std::mt19937 random_generator(1111);
     std::uniform_int_distribution<int> range(0, MAX_FOR_RANDOM);
     int size = range(random_generator);
@@ -273,14 +273,14 @@ TEST(STDVector, AllOnIntSpeedTest) {
 
   long long time_start = rusage.ru_utime.tv_sec * (long long)1e6 + rusage.ru_utime.tv_usec;
   getrusage(RUSAGE_SELF, &rusage);
-  std::cout << "ChunkedVector: " <<  rusage.ru_utime.tv_sec * (long long)1e6 + rusage.ru_utime.tv_usec  - time_start << std::endl;
+  std::cout << "std::vector: " <<  rusage.ru_utime.tv_sec * (long long)1e6 + rusage.ru_utime.tv_usec  - time_start << std::endl;
 }
 
 TEST(ChunkedVector, AllOnIntSpeedTest) {
   struct rusage rusage;
   getrusage(RUSAGE_SELF, &rusage);
 
-  for (int time = 0; time < 100; ++time) {
+  for (int time = 0; time < 10; ++time) {
     std::mt19937 random_generator(1111);
     std::uniform_int_distribution<int> range(0, MAX_FOR_RANDOM);
     int size = range(random_generator);

@@ -45,7 +45,7 @@ class ChunkedVector<T, allocate_memory_for_one_time, typename std::enable_if_t<1
   inline T &At(size_t index) {
     assert(index >= 0);
     assert(index < size_);
-    if (size_ <= allocate_memory_for_one_time) {
+    if (pointer_on_chunked_vector_ == nullptr) {
       return pointer_on_small_array_[index];
     } else {
       return ((T *) (pointer_on_chunked_vector_->At(index / allocate_memory_for_one_time)))[index
@@ -62,12 +62,12 @@ class ChunkedVector<T, allocate_memory_for_one_time, typename std::enable_if_t<1
   }
 
   ~ChunkedVector() {
-    if (size_ > allocate_memory_for_one_time) {
+    if (pointer_on_chunked_vector_ != nullptr) {
       for (size_t i = 0; i < pointer_on_chunked_vector_->Size(); ++i) {
-        delete[] (T *)pointer_on_chunked_vector_->At(i);
+        delete[] (T *) pointer_on_chunked_vector_->At(i);
       }
       delete pointer_on_chunked_vector_;
-    } else if (size_ > 0) {
+    } else if (pointer_on_small_array_ != nullptr) {
       delete[] pointer_on_small_array_;
     }
   }
@@ -78,7 +78,7 @@ class ChunkedVector<T, allocate_memory_for_one_time, typename std::enable_if_t<1
     pointer_on_small_array_ = other.pointer_on_small_array;
     other.pointer_on_small_array = nullptr;
     size_ = other.size_;
-    other.size_ = size_;
+    other.size_ = 0;
   }
 
   inline T &Front() {
@@ -95,13 +95,13 @@ class ChunkedVector<T, allocate_memory_for_one_time, typename std::enable_if_t<1
     return !size_;
   }
 
-  inline void PushBack(const T& new_object) {
+  inline void PushBack(const T &new_object) {
     IncreaseSizeTo(size_ + 1);
     Back() = new_object;
   }
 
-  template <typename... Args>
-  inline void EmplaceBack(Args&&... args) {
+  template<typename... Args>
+  inline void EmplaceBack(Args &&... args) {
     IncreaseSizeTo(size_ + 1);
     Back() = T(args...);
   }
@@ -111,7 +111,7 @@ class ChunkedVector<T, allocate_memory_for_one_time, typename std::enable_if_t<1
     DecreaseSizeTo(size_ - 1);
   }
 
-  inline void Swap(ChunkedVector& other) {
+  inline void Swap(ChunkedVector &other) {
     std::swap(size_, other.size_);
     std::swap(pointer_on_small_array_, other.pointer_on_small_array_);
     std::swap(pointer_on_chunked_vector_, other.pointer_on_chunked_vector_);
@@ -143,7 +143,7 @@ class ChunkedVector<T, allocate_memory_for_one_time, typename std::enable_if_t<1
   }
 
   inline void IncreaseSizeTo(size_t new_size) {
-    if (size_ <= allocate_memory_for_one_time) {
+    if (pointer_on_chunked_vector_ == nullptr) {
       if (new_size > allocate_memory_for_one_time) {
         size_t number_of_needed_blocks = NumberOfNeededBlocks(new_size);
         pointer_on_chunked_vector_ = new ChunkedVector<void *, allocate_memory_for_one_time>(number_of_needed_blocks);
@@ -163,8 +163,11 @@ class ChunkedVector<T, allocate_memory_for_one_time, typename std::enable_if_t<1
       }
     } else {
       size_t number_of_needed_blocks = NumberOfNeededBlocks(new_size);
-      pointer_on_chunked_vector_->Resize(number_of_needed_blocks);
-      for (size_t i = NumberOfNeededBlocks(size_); i < number_of_needed_blocks; ++i) {
+      size_t start_number_of_blocks = pointer_on_chunked_vector_->Size();
+      if (start_number_of_blocks < number_of_needed_blocks) {
+        pointer_on_chunked_vector_->Resize(number_of_needed_blocks);
+      }
+      for (size_t i = start_number_of_blocks; i < number_of_needed_blocks; ++i) {
         pointer_on_chunked_vector_->At(i) = new T[allocate_memory_for_one_time];
       }
     }
@@ -173,27 +176,14 @@ class ChunkedVector<T, allocate_memory_for_one_time, typename std::enable_if_t<1
   }
 
   inline void DecreaseSizeTo(size_t new_size) {
-    if (size_ <= allocate_memory_for_one_time) {
-      if (new_size == 0) {
-        delete[] pointer_on_small_array_;
-        pointer_on_small_array_ = nullptr;
-      }
-    } else {
-      size_t number_of_needed_blocks = NumberOfNeededBlocks(new_size);
+    if (pointer_on_chunked_vector_ != nullptr) {
+      size_t number_of_needed_blocks = NumberOfNeededBlocks(new_size) + 1;
       size_t current_number_of_blocks = pointer_on_chunked_vector_->Size();
       for (size_t i = number_of_needed_blocks; i < current_number_of_blocks; ++i) {
-        delete[] (T *)pointer_on_chunked_vector_->At(i);
+        delete[] (T *) pointer_on_chunked_vector_->At(i);
       }
-      if (new_size > allocate_memory_for_one_time) {
+      if (number_of_needed_blocks < current_number_of_blocks) {
         pointer_on_chunked_vector_->Resize(number_of_needed_blocks);
-      } else {
-        if (new_size == 0) {
-          pointer_on_small_array_ = nullptr;
-        } else {
-          pointer_on_small_array_ = (T *) pointer_on_chunked_vector_->At(0);
-        }
-        delete pointer_on_chunked_vector_;
-        pointer_on_chunked_vector_ = nullptr;
       }
     }
 

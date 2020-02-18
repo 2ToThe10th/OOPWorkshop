@@ -4,17 +4,53 @@
 #include <unistd.h>
 #include <vector>
 
-typedef struct stat Stat;
+typedef struct stat Stat_t;
+
+char *ReadFullBook(int &);
+
+class String;
+
+bool CompareString(const String &, const String &);
+
+bool CompareStringReversed(const String &, const String &);
+
+void FindLines(std::vector<String> &, char *, int);
+
+void WriteVector(std::vector<String> &, int);
+
+int main() {
+
+  int length_of_book;
+  char *all_book = ReadFullBook(length_of_book);
+
+  std::vector<String> book;
+
+  FindLines(book, all_book, length_of_book);
+
+  int fd_out = open("out.txt", O_WRONLY | O_TRUNC);
+
+  std::sort(book.begin(), book.end(), CompareString);
+  WriteVector(book, fd_out);
+  write(fd_out, "-------------------------\n", 26);
+
+  std::sort(book.begin(), book.end(), CompareStringReversed);
+  WriteVector(book, fd_out);
+  write(fd_out, "-------------------------\n", 26);
+
+  write(fd_out, all_book, length_of_book);
+
+  close(fd_out);
+}
 
 class String {
-public:
+ public:
   char *start_of_string;
   int number_of_symbols;
 
   String(char *start_of_string, int number_of_symbols)
-      : start_of_string(start_of_string), number_of_symbols(number_of_symbols) {}
+    : start_of_string(start_of_string), number_of_symbols(number_of_symbols) {}
 
-  void swap(String& other) {
+  void swap(String &other) {
     std::swap(start_of_string, other.start_of_string);
     std::swap(number_of_symbols, other.number_of_symbols);
   }
@@ -26,13 +62,13 @@ public:
 
 void SkipSymbolsInc(const String &str, int &id) {
   while (id < str.number_of_symbols && (str.start_of_string[id] == '.' || str.start_of_string[id] == ',' ||
-                             str.start_of_string[id] == '?' || str.start_of_string[id] == '!')) {
+    str.start_of_string[id] == '?' || str.start_of_string[id] == '!')) {
     ++id;
   }
 }
 
 bool CompareString(const String &first_str,
-                    const String &second_str) {
+                   const String &second_str) {
   int id_first = 0;
   int id_second = 0;
 
@@ -57,14 +93,15 @@ bool CompareString(const String &first_str,
 }
 
 void SkipSymbolsDecr(const String &str, int &id) {
-  while (id >= 0 && (str.start_of_string[id] == '.' || str.start_of_string[id] == ',' || str.start_of_string[id] == '?' ||
-                     str.start_of_string[id] == '!')) {
+  while (id >= 0
+    && (str.start_of_string[id] == '.' || str.start_of_string[id] == ',' || str.start_of_string[id] == '?' ||
+      str.start_of_string[id] == '!')) {
     --id;
   }
 }
 
 bool CompareStringReversed(const String &first_str,
-                             const String &second_str) {
+                           const String &second_str) {
   int id_first = first_str.number_of_symbols;
   int id_second = second_str.number_of_symbols;
 
@@ -89,7 +126,7 @@ bool CompareStringReversed(const String &first_str,
 }
 
 void FindLines(std::vector<String> &book, char *all_book,
-                int length_of_book) {
+               int length_of_book) {
   int start_of_line = 0;
   for (int i = 0; i < length_of_book; ++i) {
     if (all_book[i] == '\n') {
@@ -113,7 +150,7 @@ void WriteVector(std::vector<String> &book, int fd_out) {
 char *ReadFullBook(int &length_of_book) {
   int fd_in = open("in.txt", O_RDONLY);
 
-  Stat stat;
+  Stat_t stat;
   fstat(fd_in, &stat);
   length_of_book = stat.st_size;
 
@@ -123,28 +160,4 @@ char *ReadFullBook(int &length_of_book) {
   close(fd_in);
 
   return all_book;
-}
-
-int main() {
-
-  int length_of_book;
-  char *all_book = ReadFullBook(length_of_book);
-
-  std::vector<String> book;
-
-  FindLines(book, all_book, length_of_book);
-
-  int fd_out = open("out.txt", O_WRONLY | O_TRUNC);
-
-  std::sort(book.begin(), book.end(), CompareString);
-  WriteVector(book, fd_out);
-  write(fd_out, "-------------------------\n", 26);
-
-  std::sort(book.begin(), book.end(), CompareStringReversed);
-  WriteVector(book, fd_out);
-  write(fd_out, "-------------------------\n", 26);
-
-  write(fd_out, all_book, length_of_book);
-
-  close(fd_out);
 }
