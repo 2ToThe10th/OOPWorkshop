@@ -202,5 +202,3 @@ class ChunkedVector<T, allocate_memory_for_one_time, typename std::enable_if_t<1
 };
 
 #endif //CHUNKEDVECTOR__CHUNKEDVECTOR_H_
-
-// ubcnthtpbc
