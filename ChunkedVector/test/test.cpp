@@ -4,6 +4,11 @@
 #include <random>
 #include <unistd.h>
 #include <sys/resource.h>
+#include <../../StatisticInt/StatisticInt.h>
+
+TEST(ChunkedVector, Place) {
+
+}
 
 TEST(ChunkedVector, ResizeIncrease) {
   ChunkedVector<int, 4> vec(3);
@@ -35,6 +40,25 @@ TEST(ChunkedVector, ResizeIncrease) {
   }
   for (int i = 0; i < 20; ++i) {
     ASSERT_EQ(vec[i], i * 100 + 7);
+  }
+}
+
+TEST(ChunkedVector, ResizeIncreaseOnString) {
+  ChunkedVector<std::string, 3> vec(4);
+  ASSERT_EQ(vec.Size(), 4);
+  for (int i = 0; i < 4; ++i) {
+    ASSERT_EQ(vec[i], "");
+  }
+  vec.Resize(10);
+  ASSERT_EQ(vec.Size(), 10);
+  for (int i = 0; i < 4; ++i) {
+    ASSERT_EQ(vec[i], "");
+  }
+  for (int i = 0; i < 10; ++i) {
+    vec[i] = "aabbcc";
+  }
+  for (int i = 0; i < 10; ++i) {
+    ASSERT_EQ(vec[i], "aabbcc");
   }
 }
 
