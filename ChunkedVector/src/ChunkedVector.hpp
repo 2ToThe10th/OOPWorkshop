@@ -3,6 +3,7 @@
 //
 #include <cstdlib>
 #include <cassert>
+#include <type_traits>
 
 #ifndef CHUNKEDVECTOR__CHUNKEDVECTOR_H_
 #define CHUNKEDVECTOR__CHUNKEDVECTOR_H_
@@ -21,6 +22,13 @@ class ChunkedVector<T, allocate_memory_for_one_time, typename std::enable_if_t<1
 
   explicit ChunkedVector(size_t new_size, T common_value) {
     Resize(new_size, common_value);
+  }
+
+  explicit ChunkedVector(const ChunkedVector<T, allocate_memory_for_one_time>& other) {
+    IncreaseSizeToWithoutImplement(other.size_);
+    for (size_t i = 0; i < other.size_; ++i) {
+      new(AtPointer(i)) T(other[i]);
+    }
   }
 
   inline void Resize(size_t new_size, T common_value) {
@@ -54,6 +62,17 @@ class ChunkedVector<T, allocate_memory_for_one_time, typename std::enable_if_t<1
     return At(index);
   }
 
+  inline const T &operator[](size_t index) const {
+    assert(index >= 0);
+    assert(index < size_);
+    if (pointer_on_chunked_vector_ == nullptr) {
+      return pointer_on_small_array_[index];
+    } else {
+      return ((T *) (pointer_on_chunked_vector_->At(index / allocate_memory_for_one_time)))[index
+        % allocate_memory_for_one_time];
+    }
+  }
+
   inline size_t Size() const {
     return size_;
   }
@@ -67,7 +86,22 @@ class ChunkedVector<T, allocate_memory_for_one_time, typename std::enable_if_t<1
     }
   }
 
+  inline ChunkedVector &operator=(const ChunkedVector &other) noexcept {
+    Resize(other.Size());
+
+    for (size_t i = 0; i < size_; ++i) {
+      At(i) = other.At(i);
+    }
+  }
+
   inline ChunkedVector &operator=(ChunkedVector &&other) noexcept {
+    Resize(0);
+    if (pointer_on_chunked_vector_ != nullptr) {
+      delete pointer_on_chunked_vector_;
+    }
+    if (pointer_on_small_array_ != nullptr) {
+      delete[] (char *) pointer_on_small_array_;
+    }
     pointer_on_chunked_vector_ = other.pointer_on_chunked_vector;
     other.pointer_on_chunked_vector = nullptr;
     pointer_on_small_array_ = other.pointer_on_small_array;
@@ -92,13 +126,13 @@ class ChunkedVector<T, allocate_memory_for_one_time, typename std::enable_if_t<1
 
   inline void PushBack(const T &new_object) {
     IncreaseSizeToWithoutImplement(size_ + 1);
-    new (AtPointer(size_ - 1)) T(new_object);
+    new(AtPointer(size_ - 1)) T(new_object);
   }
 
   template<typename... Args>
   inline void EmplaceBack(Args &&... args) {
     IncreaseSizeToWithoutImplement(size_ + 1);
-    new (AtPointer(size_ - 1)) T(args...);
+    new(AtPointer(size_ - 1)) T(args...);
   }
 
   inline void PopBack() {
@@ -144,7 +178,7 @@ class ChunkedVector<T, allocate_memory_for_one_time, typename std::enable_if_t<1
     size_t old_size = size_;
     IncreaseSizeToWithoutImplement(new_size);
     for (size_t i = old_size; i < new_size; ++i) {
-      new (AtPointer(i)) T(common_value);
+      new(AtPointer(i)) T(common_value);
     }
   }
 
@@ -152,7 +186,7 @@ class ChunkedVector<T, allocate_memory_for_one_time, typename std::enable_if_t<1
     size_t old_size = size_;
     IncreaseSizeToWithoutImplement(new_size);
     for (size_t i = old_size; i < new_size; ++i) {
-      new (AtPointer(i)) T();
+      new(AtPointer(i)) T();
     }
   }
 
