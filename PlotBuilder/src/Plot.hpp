@@ -157,7 +157,7 @@ void Plot<allocate_memory_for_one_time>::DrawAndRoundScale() {
   GetScientificFormAndRound(size_of_graph_y_, power_y, significand_y);
 
   sf::Font font;
-  if (!font.loadFromFile("res/ArialMT.ttf")) {
+  if (!font.loadFromFile("/home/sasha/OOPWorkshop/PlotBuilder/res/ArialMT.ttf")) {
     std::cout << "font not loaded" << std::endl;
     return;
   }

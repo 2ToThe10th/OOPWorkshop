@@ -3,15 +3,15 @@
 int main() {
 
   PlotBuilder<100> plot_builder(1);
-  plot_builder[0].SetWindowSize({1820, 1000});
+  //plot_builder[0].SetWindowSize({1820, 1000});
 
   ChunkedVector<sf::Vector2u, 100> vec;
 
   vec.EmplaceBack(0, 0);
-  vec.EmplaceBack(100, 2000);
-  vec.EmplaceBack(200, 300000);
-  vec.EmplaceBack(300, 400000);
-  vec.EmplaceBack(3000, 960000);
+  vec.EmplaceBack(10000, 200);
+  vec.EmplaceBack(20000, 300000);
+  vec.EmplaceBack(30000, 400000);
+  vec.EmplaceBack(30010, 960000);
 
   plot_builder[0].AddGraph(vec, sf::Color::Red);
 

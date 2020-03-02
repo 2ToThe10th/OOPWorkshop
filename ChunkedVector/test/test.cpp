@@ -5,9 +5,18 @@
 #include <unistd.h>
 #include <sys/resource.h>
 #include <../../StatisticInt/StatisticInt.h>
+#include <../../StatisticInt/Statistic.h>
 
-TEST(ChunkedVector, Place) {
+TEST(ChunkedVector, InitializeOneArray) {
+  StatisticInt::GetStatistic().MakeEmpty();
+  ChunkedVector<StatisticInt, 4> vec(3);
+  ASSERT_EQ(StatisticInt::GetStatistic().GetNumberOfConstructor(), 3);
+}
 
+TEST(ChunkedVector, InitializeMore) {
+  StatisticInt::GetStatistic().MakeEmpty();
+  ChunkedVector<StatisticInt, 4> vec(10);
+  ASSERT_EQ(StatisticInt::GetStatistic().GetNumberOfConstructor(), 10);
 }
 
 TEST(ChunkedVector, ResizeIncrease) {
@@ -157,6 +166,28 @@ TEST(ChunkedVector, ResizeDecreaseAndIncrease) {
   ASSERT_EQ(vec.Size(), 0);
 }
 
+TEST(ChunkedVector, ResizeDecreaseAndIncreaseInitialize) {
+  StatisticInt::GetStatistic().MakeEmpty();
+  ChunkedVector<StatisticInt, 4> vec(25);
+  ASSERT_EQ(StatisticInt::GetStatistic().GetNumberOfConstructor(), 25);
+  StatisticInt::GetStatistic().MakeEmpty();
+  vec.Resize(30);
+  ASSERT_EQ(StatisticInt::GetStatistic().GetNumberOfConstructor(), 5);
+  StatisticInt::GetStatistic().MakeEmpty();
+  vec.EmplaceBack(3005);
+  ASSERT_EQ(StatisticInt::GetStatistic().GetNumberOfConstructor(), 1);
+  StatisticInt::GetStatistic().MakeEmpty();
+  vec.PopBack();
+  ASSERT_EQ(StatisticInt::GetStatistic().GetNumberOfConstructor(), 0);
+  StatisticInt::GetStatistic().MakeEmpty();
+  vec.PopBack();
+  vec.Resize(3);
+  ASSERT_EQ(StatisticInt::GetStatistic().GetNumberOfConstructor(), 0);
+  StatisticInt::GetStatistic().MakeEmpty();
+  vec.EmplaceBack(307);
+  ASSERT_EQ(StatisticInt::GetStatistic().GetNumberOfConstructor(), 1);
+}
+
 template<typename T>
 void CheckAll(std::vector<T> &vector_from_std, ChunkedVector<T, 20> &chunked_vector) {
   ASSERT_EQ(vector_from_std.size(), chunked_vector.Size());
@@ -169,13 +200,13 @@ void CheckAll(std::vector<T> &vector_from_std, ChunkedVector<T, 20> &chunked_vec
   for (size_t i = 0; i < vector_from_std.size(); ++i) {
     ASSERT_EQ(vector_from_std[i], chunked_vector[i]);
   }
-  if (vector_from_std.size() > 0) {
+  if (!vector_from_std.empty()) {
     ASSERT_EQ(vector_from_std.front(), chunked_vector.Front());
     ASSERT_EQ(vector_from_std.back(), chunked_vector.Back());
   }
 }
 
-const int MAX_FOR_RANDOM = 1e5;
+const int MAX_FOR_RANDOM = 1e4;
 
 TEST(ChunkedVector, AllOnInt) {
   for (int time = 0; time < 10; ++time) {
@@ -337,3 +368,4 @@ TEST(ChunkedVector, AllOnIntSpeedTest) {
   getrusage(RUSAGE_SELF, &rusage);
   std::cout << "ChunkedVector: " <<  rusage.ru_utime.tv_sec * (long long)1e6 + rusage.ru_utime.tv_usec  - time_start << std::endl;
 }
+

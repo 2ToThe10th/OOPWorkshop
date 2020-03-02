@@ -9,8 +9,16 @@
 class StatisticInt {
  public:
   // constructor
-  StatisticInt(int number = 0) : number_(number) {
-    statistic.IncreaseNumberOfAssigment();
+  StatisticInt() : number_(0) {
+    statistic.IncreaseNumberOfConstructor();
+  }
+
+  StatisticInt(int number) : number_(number) {
+    statistic.IncreaseNumberOfConstructor();
+  }
+
+  StatisticInt(const StatisticInt& other) : number_(other.number_) {
+    statistic.IncreaseNumberOfConstructor();
   }
 
   // =
@@ -48,7 +56,7 @@ class StatisticInt {
 
   StatisticInt operator++(int) {
     statistic.IncreaseNumberOfPlus();
-    return {number_++};
+    return StatisticInt(number_++);
   }
 
   // -=
@@ -73,7 +81,7 @@ class StatisticInt {
 
   StatisticInt operator--(int) {
     statistic.IncreaseNumberOfPlus();
-    return {number_--};
+    return StatisticInt(number_--);
   }
 
   // *=
@@ -118,81 +126,81 @@ class StatisticInt {
   // +
   StatisticInt operator+(const StatisticInt &other) {
     statistic.IncreaseNumberOfPlus();
-    return {number_ + other.number_};
+    return StatisticInt(number_ + other.number_);
   }
 
   StatisticInt operator+(const int other) {
     statistic.IncreaseNumberOfPlus();
-    return {number_ + other};
+    return StatisticInt(number_ + other);
   }
 
   friend StatisticInt operator+(const int first, const StatisticInt &second) {
     statistic.IncreaseNumberOfPlus();
-    return {first + second.number_};
+    return StatisticInt(first + second.number_);
   }
 
   // -
   StatisticInt operator-(const StatisticInt &other) {
     statistic.IncreaseNumberOfPlus();
-    return {number_ - other.number_};
+    return StatisticInt(number_ - other.number_);
   }
 
   StatisticInt operator-(const int other) {
     statistic.IncreaseNumberOfPlus();
-    return {number_ - other};
+    return StatisticInt(number_ - other);
   }
 
   friend StatisticInt operator-(const int first, const StatisticInt &second) {
     statistic.IncreaseNumberOfPlus();
-    return {first - second.number_};
+    return StatisticInt(first - second.number_);
   }
 
   // *
   StatisticInt operator*(const StatisticInt &other) {
     statistic.IncreaseNumberOfPlus();
-    return {number_ * other.number_};
+    return StatisticInt(number_ * other.number_);
   }
 
   StatisticInt operator*(const int other) {
     statistic.IncreaseNumberOfPlus();
-    return {number_ * other};
+    return StatisticInt(number_ * other);
   }
 
   friend StatisticInt operator*(const int first, const StatisticInt &second) {
     statistic.IncreaseNumberOfPlus();
-    return {first * second.number_};
+    return StatisticInt(first * second.number_);
   }
 
   // /
   StatisticInt operator/(const StatisticInt &other) {
     statistic.IncreaseNumberOfPlus();
-    return {number_ / other.number_};
+    return StatisticInt(number_ / other.number_);
   }
 
   StatisticInt operator/(const int other) {
     statistic.IncreaseNumberOfPlus();
-    return {number_ / other};
+    return StatisticInt(number_ / other);
   }
 
   friend StatisticInt operator/(const int first, const StatisticInt &second) {
     statistic.IncreaseNumberOfPlus();
-    return {first / second.number_};
+    return StatisticInt(first / second.number_);
   }
 
   // %
   StatisticInt operator%(const StatisticInt &other) {
     statistic.IncreaseNumberOfPlus();
-    return {number_ % other.number_};
+    return StatisticInt(number_ % other.number_);
   }
 
   StatisticInt operator%(const int other) {
     statistic.IncreaseNumberOfPlus();
-    return {number_ % other};
+    return StatisticInt(number_ % other);
   }
 
   friend StatisticInt operator%(const int first, const StatisticInt &second) {
     statistic.IncreaseNumberOfPlus();
-    return {first % second.number_};
+    return StatisticInt(first % second.number_);
   }
 
   // ==
@@ -279,12 +287,18 @@ class StatisticInt {
     return number_;
   }
 
+  ~StatisticInt() {
+    statistic.IncreaseNumberOfDestructor();
+  };
+
   static Statistic& GetStatistic() { return statistic; }
 
  private:
   int number_;
   static Statistic statistic;
 };
+
+Statistic StatisticInt::statistic;
 
 #endif // STATISTICINT_STATISTICINT_H
 

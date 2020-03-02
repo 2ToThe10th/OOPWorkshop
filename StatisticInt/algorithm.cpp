@@ -7,23 +7,22 @@
 #include <vector>
 #include "StatisticInt.h"
 
-#define int StatisticInt
 
-int BinomialExponentiation(int argument, int degree) {
-  if (degree == 0)
-    return 1;
-  if (degree % 2 == 1)
+StatisticInt BinomialExponentiation(StatisticInt argument, StatisticInt degree) {
+  if (degree == StatisticInt(0))
+    return StatisticInt(1);
+  if (degree % StatisticInt(2) == StatisticInt(1))
     return BinomialExponentiation(argument, degree - 1) * argument;
   else {
-    int argument_in_doubled_degree =
+    StatisticInt argument_in_doubled_degree =
       BinomialExponentiation(argument, degree / 2);
     return argument_in_doubled_degree * argument_in_doubled_degree;
   }
 }
 
-int StupidExponentiation(int argument, int degree) {
-  int answer = 1;
-  for (int i = 0; i < degree; ++i) {
+StatisticInt StupidExponentiation(StatisticInt argument, StatisticInt degree) {
+  StatisticInt answer = 1;
+  for (StatisticInt i = 0; i < degree; ++i) {
     answer *= argument;
   }
   return answer;
@@ -49,9 +48,9 @@ int GCD(int first, int second) {
     return GCD(second, first % second);
 }
 
-void BubbleSort(int* start_of_array, int number_of_elements) {
-  for (int i = 1; i < number_of_elements; ++i) {
-    for (int j = 1; j < number_of_elements - i; ++j) {
+void BubbleSort(StatisticInt* start_of_array, StatisticInt number_of_elements) {
+  for (StatisticInt i = 1; i < number_of_elements; ++i) {
+    for (StatisticInt j = 1; j < number_of_elements - i; ++j) {
       if (start_of_array[j - 1] > start_of_array[j]) {
         std::swap(start_of_array[j - 1], start_of_array[j]);
       }
