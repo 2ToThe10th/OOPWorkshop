@@ -58,11 +58,7 @@ class ChunkedVector<T, allocate_memory_for_one_time, typename std::enable_if_t<1
     }
   }
 
-  inline T &operator[](size_t index) {
-    return At(index);
-  }
-
-  inline const T &operator[](size_t index) const {
+  inline const T &ConstAt(size_t index) const {
     assert(index >= 0);
     assert(index < size_);
     if (pointer_on_chunked_vector_ == nullptr) {
@@ -71,6 +67,14 @@ class ChunkedVector<T, allocate_memory_for_one_time, typename std::enable_if_t<1
       return ((T *) (pointer_on_chunked_vector_->At(index / allocate_memory_for_one_time)))[index
         % allocate_memory_for_one_time];
     }
+  }
+
+  inline T &operator[](size_t index) {
+    return At(index);
+  }
+
+  inline const T &operator[](size_t index) const {
+    return ConstAt(index);
   }
 
   inline size_t Size() const {
@@ -115,9 +119,19 @@ class ChunkedVector<T, allocate_memory_for_one_time, typename std::enable_if_t<1
     return At(0);
   }
 
+  inline const T &Front() const {
+    assert(size_);
+    return ConstAt(0);
+  }
+
   inline T &Back() {
     assert(size_);
     return At(size_ - 1);
+  }
+
+  inline const T &Back() const {
+    assert(size_);
+    return ConstAt(size_ - 1);
   }
 
   inline bool Empty() {

@@ -3,6 +3,7 @@
 //
 #include <SFML/Graphics.hpp>
 #include <iostream>
+#include <cmath>
 #include "../../ChunkedVector/src/ChunkedVector.hpp"
 
 #ifndef PLOTBUILDER_SRC_PLOT_H_
@@ -18,17 +19,37 @@ class Plot {
   void PollEvent();
   void AddGraph(const ChunkedVector<sf::Vector2u, allocate_memory_for_one_time> &new_graph, sf::Color color);
   void SetName(const std::string &new_window_name);
-  void SetWindowSize(const sf::Vector2u new_window_size);
+  void SetWindowSize(const sf::Vector2u &new_window_size);
   void Draw();
 
   ~Plot() = default;
 
  private:
+
+  void GetScientificFormAndRound(size_t &number, size_t &power, size_t &significand);
+  void DrawAxis();
+  void DrawAndRoundScale();
+  void DrawKthGraph(size_t k);
+  float GetXOnGraph(unsigned int x);
+  float GetYOnGraph(unsigned int y);
+
   std::string window_name_;
   sf::Vector2u window_size_ = sf::Vector2u(1200, 800);
   sf::RenderWindow window_;
   ChunkedVector<ChunkedVector<sf::Vector2u, allocate_memory_for_one_time>, allocate_memory_for_one_time> graph_;
   ChunkedVector<sf::Color, allocate_memory_for_one_time> color_;
+  size_t size_of_graph_y_ = 10;
+  size_t size_of_graph_x_ = 10;
+  constexpr static const float place_for_number_ = 0.08;
+  sf::Vector2f start_position_ = {place_for_number_ * window_size_.x, place_for_number_ * window_size_.y};
+  sf::Vector2u place_for_graph_ = {(unsigned int) std::floor(window_size_.x - start_position_.x),
+                                   (unsigned int) std::floor(window_size_.y - start_position_.y)};
+  constexpr static const float axis_thickness_ = 5;
+  constexpr static const float point_radius_ = 5;
+  constexpr static const unsigned int period = 200;
+  constexpr static const unsigned int place_not_to_write_ = 100;
+  constexpr static const float expected_size_of_text_x_ = 35;
+  constexpr static const float expected_size_of_text_y_ = 25;
 };
 
 template<size_t allocate_memory_for_one_time>
@@ -55,8 +76,13 @@ template<size_t allocate_memory_for_one_time>
 void Plot<allocate_memory_for_one_time>::AddGraph(const ChunkedVector<sf::Vector2u,
                                                                       allocate_memory_for_one_time> &new_graph,
                                                   sf::Color color) {
+  size_of_graph_y_ = std::max<size_t>(size_of_graph_y_, new_graph[0].y);
   for (size_t i = 1; i < new_graph.Size(); ++i) {
     assert(new_graph[i - 1].x < new_graph[i].x);
+    size_of_graph_y_ = std::max<size_t>(size_of_graph_y_, new_graph[i].y);
+  }
+  if (new_graph.Size()) {
+    size_of_graph_x_ = std::max<size_t>(size_of_graph_x_, new_graph.Back().x);
   }
   graph_.EmplaceBack(new_graph);
   color_.EmplaceBack(color);
@@ -68,62 +94,137 @@ void Plot<allocate_memory_for_one_time>::SetName(const std::string &new_window_n
 }
 
 template<size_t allocate_memory_for_one_time>
-void Plot<allocate_memory_for_one_time>::SetWindowSize(const sf::Vector2u new_window_size) {
+void Plot<allocate_memory_for_one_time>::SetWindowSize(const sf::Vector2u &new_window_size) {
   window_size_ = new_window_size;
+  start_position_ = {place_for_number_ * window_size_.x, place_for_number_ * window_size_.y};
+  place_for_graph_ = {(unsigned int) std::floor(window_size_.x - start_position_.x),
+                      (unsigned int) std::floor(window_size_.y - start_position_.y)};
 }
+
 template<size_t allocate_memory_for_one_time>
 void Plot<allocate_memory_for_one_time>::Draw() {
   window_.create(sf::VideoMode(window_size_.x, window_size_.y), window_name_, sf::Style::Close);
   window_.clear(sf::Color::White);
 
-  float place_for_number = 0.08;
-  float axis_thickness = 5;
-  float point_radius = 5;
-  float line_thickness = 1;
-  sf::Vector2f start_position = {place_for_number * window_size_.x, place_for_number * window_size_.y};
+  DrawAxis();
 
-  //std::cout << start_position.x << ' ' << start_position.y << std::endl;
+  DrawAndRoundScale();
 
-  sf::RectangleShape
-    axis_x(sf::Vector2f((1 - place_for_number) * window_size_.x + axis_thickness / 2, axis_thickness));
-  axis_x.setFillColor(sf::Color::Black);
-  axis_x.setPosition(start_position.x - axis_thickness / 2, window_size_.y - (start_position.y + axis_thickness / 2));
-
-//  std::cout << axis_x.getPosition().x << ' ' << axis_x.getPosition().y << std::endl;
-  window_.draw(axis_x);
-
-  sf::RectangleShape
-    axis_y(sf::Vector2f(axis_thickness, (1 - place_for_number) * window_size_.y + axis_thickness / 2));
-  axis_y.setFillColor(sf::Color::Black);
-  axis_y.setPosition(start_position.x - axis_thickness / 2, 0);
-  window_.draw(axis_y);
-
-
-  for (size_t i = 0; i < graph_.Size(); ++i) {
-    for (int point_number = 0; point_number < graph_[i].Size(); ++point_number) {
-      sf::CircleShape point(point_radius);
-      point.setPosition(start_position.x + graph_[i][point_number].x - point_radius,
-                        window_size_.y - (start_position.y + graph_[i][point_number].y + point_radius));
-      //std::cout << point.getPosition().x + point_radius << ' ' << point.getPosition().y - point_radius << std::endl;
-      point.setFillColor(color_[i]);
-      window_.draw(point);
-    }
-    if (graph_[i].Size() > 1) {
-      std::cout << "i=" << i << std::endl;
-      sf::VertexArray line_of_graph(sf::TriangleStrip, 2 * graph_[i].Size());
-      for (size_t point_number = 0; point_number < graph_[i].Size(); ++point_number) {
-        line_of_graph[2 * point_number].position = sf::Vector2f(start_position.x + graph_[i][point_number].x, window_size_.y - (start_position.y + graph_[i][point_number].y + line_thickness / 2));
-        line_of_graph[2 * point_number].color = color_[i];
-        line_of_graph[2 * point_number + 1].position = sf::Vector2f(start_position.x + graph_[i][point_number].x, window_size_.y - (start_position.y + graph_[i][point_number].y - line_thickness / 2));
-        line_of_graph[2 * point_number + 1].color = color_[i];
-        std::cout << line_of_graph[2 * point_number].position.x << ' ' << line_of_graph[2 * point_number].position.y << ' '
-                  << line_of_graph[2 * point_number + 1].position.x << ' ' << line_of_graph[2 * point_number + 1].position.y << std::endl;
-      }
-      window_.draw(line_of_graph);
-    }
+  for (size_t k = 0; k < graph_.Size(); ++k) {
+    DrawKthGraph(k);
   }
 
   window_.display();
+}
+
+template<size_t allocate_memory_for_one_time>
+void Plot<allocate_memory_for_one_time>::DrawAxis() {
+  sf::RectangleShape
+    axis_x(sf::Vector2f((1 - place_for_number_) * window_size_.x + axis_thickness_ / 2, axis_thickness_));
+  axis_x.setFillColor(sf::Color::Black);
+  axis_x.setPosition(start_position_.x - axis_thickness_ / 2,
+                     window_size_.y - (start_position_.y + axis_thickness_ / 2));
+  window_.draw(axis_x);
+
+  sf::RectangleShape
+    axis_y(sf::Vector2f(axis_thickness_, (1 - place_for_number_) * window_size_.y + axis_thickness_ / 2));
+  axis_y.setFillColor(sf::Color::Black);
+  axis_y.setPosition(start_position_.x - axis_thickness_ / 2, 0);
+  window_.draw(axis_y);
+}
+
+template<size_t allocate_memory_for_one_time>
+void Plot<allocate_memory_for_one_time>::GetScientificFormAndRound(size_t &number, size_t &power, size_t &significand) {
+  size_t old_number = number;
+  number = 1;
+  while (old_number >= 100) {
+    old_number /= 10;
+    number *= 10;
+    ++power;
+  }
+  significand = old_number + 1;
+  number *= significand;
+}
+
+template<size_t allocate_memory_for_one_time>
+void Plot<allocate_memory_for_one_time>::DrawAndRoundScale() {
+  size_t power_x = 0;
+  size_t significand_x = 0;
+  size_t power_y = 0;
+  size_t significand_y = 0;
+
+  GetScientificFormAndRound(size_of_graph_x_, power_x, significand_x);
+  GetScientificFormAndRound(size_of_graph_y_, power_y, significand_y);
+
+  sf::Font font;
+  if (!font.loadFromFile("res/ArialMT.ttf")) {
+    std::cout << "font not loaded" << std::endl;
+    return;
+  }
+
+  int count_of_number_on_x = (place_for_graph_.x - place_not_to_write_) / period;
+  for (int i = 1; i <= count_of_number_on_x; ++i) {
+    std::string string_to_draw = std::to_string((significand_x / count_of_number_on_x) * i);
+    if (power_x > 0) {
+      string_to_draw += "e" + std::to_string(power_x);
+    }
+    sf::Vector2f where_to_place = {start_position_.x + GetXOnGraph((size_of_graph_x_ / count_of_number_on_x) * i) - expected_size_of_text_x_,
+                                   (1 - place_for_number_ / 2) * window_size_.y - expected_size_of_text_y_};
+    sf::Text text(string_to_draw, font);
+    text.setPosition(where_to_place);
+    text.setFillColor(sf::Color::Black);
+    window_.draw(text);
+  }
+
+  int count_of_number_on_y = (place_for_graph_.y - place_not_to_write_) / period;
+  for (int i = 1; i <= count_of_number_on_y; ++i) {
+    std::string string_to_draw = std::to_string((significand_y / count_of_number_on_y) * i);
+    if (power_y > 0) {
+      string_to_draw += "e" + std::to_string(power_y);
+    }
+    sf::Vector2f where_to_place = {(place_for_number_ / 2) * window_size_.x - expected_size_of_text_x_,
+                                   window_size_.y - (start_position_.y + GetYOnGraph((size_of_graph_y_ / count_of_number_on_y) * i)) - expected_size_of_text_y_};
+    sf::Text text(string_to_draw, font);
+    text.setPosition(where_to_place);
+    text.setFillColor(sf::Color::Black);
+    window_.draw(text);
+  }
+}
+
+template<size_t allocate_memory_for_one_time>
+void Plot<allocate_memory_for_one_time>::DrawKthGraph(size_t k) {
+  // draw points:
+  for (int point_number = 0; point_number < graph_[k].Size(); ++point_number) {
+    sf::CircleShape point(point_radius_);
+    point.setPosition(start_position_.x + GetXOnGraph(graph_[k][point_number].x) - point_radius_,
+                      window_size_.y - (start_position_.y + GetYOnGraph(graph_[k][point_number].y) + point_radius_));
+    point.setFillColor(color_[k]);
+    window_.draw(point);
+  }
+  // draw lines:
+  if (graph_[k].Size() > 1) {
+    sf::VertexArray line_of_graph(sf::Lines, 2);
+    for (size_t point_number = 1; point_number < graph_[k].Size(); ++point_number) {
+      line_of_graph[0].position = sf::Vector2f(start_position_.x + GetXOnGraph(graph_[k][point_number - 1].x),
+                                               window_size_.y
+                                                 - (start_position_.y + GetYOnGraph(graph_[k][point_number - 1].y)));
+      line_of_graph[0].color = color_[k];
+      line_of_graph[1].position = sf::Vector2f(start_position_.x + GetXOnGraph(graph_[k][point_number].x),
+                                               window_size_.y
+                                                 - (start_position_.y + GetYOnGraph(graph_[k][point_number].y)));
+      line_of_graph[1].color = color_[k];
+      window_.draw(line_of_graph);
+    }
+  }
+}
+
+template<size_t allocate_memory_for_one_time>
+float Plot<allocate_memory_for_one_time>::GetXOnGraph(unsigned int x) {
+  return ((float) x / size_of_graph_x_) * (place_for_graph_.x - place_not_to_write_);
+}
+template<size_t allocate_memory_for_one_time>
+float Plot<allocate_memory_for_one_time>::GetYOnGraph(unsigned int y) {
+  return ((float) y / size_of_graph_y_) * (place_for_graph_.y - place_not_to_write_);
 }
 
 #endif //PLOTBUILDER_SRC_PLOT_H_

@@ -3,19 +3,23 @@
 int main() {
 
   PlotBuilder<100> plot_builder(1);
+  plot_builder[0].SetWindowSize({1820, 1000});
 
   ChunkedVector<sf::Vector2u, 100> vec;
 
   vec.EmplaceBack(0, 0);
-  vec.EmplaceBack(100, 200);
-  vec.EmplaceBack(200, 300);
-  vec.EmplaceBack(300, 400);
+  vec.EmplaceBack(100, 2000);
+  vec.EmplaceBack(200, 300000);
+  vec.EmplaceBack(300, 400000);
+  vec.EmplaceBack(3000, 960000);
 
   plot_builder[0].AddGraph(vec, sf::Color::Red);
 
   for (size_t i = 0; i < 4; ++i) {
     vec[i].y += 50;
   }
+
+  vec[3].y = 0;
 
   plot_builder[0].AddGraph(vec, sf::Color::Green);
 
