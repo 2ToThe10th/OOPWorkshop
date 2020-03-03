@@ -82,8 +82,16 @@ class ChunkedVector<T, allocate_memory_for_one_time, typename std::enable_if_t<1
   }
 
   ~ChunkedVector() {
-    DecreaseSizeTo(0);
+
+    for (size_t i = 0; i < size_; ++i) {
+      At(i).~T();
+    }
+
     if (pointer_on_chunked_vector_ != nullptr) {
+      size_t current_number_of_blocks = pointer_on_chunked_vector_->Size();
+      for (size_t i = 0; i < current_number_of_blocks; ++i) {
+        delete[] (char *) pointer_on_chunked_vector_->At(i);
+      }
       delete pointer_on_chunked_vector_;
     } else if (pointer_on_small_array_ != nullptr) {
       delete[] (char *) pointer_on_small_array_;

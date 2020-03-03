@@ -206,7 +206,7 @@ void CheckAll(std::vector<T> &vector_from_std, ChunkedVector<T, 20> &chunked_vec
   }
 }
 
-const int MAX_FOR_RANDOM = 1e4;
+const int MAX_FOR_RANDOM = 1e3;
 
 TEST(ChunkedVector, AllOnInt) {
   for (int time = 0; time < 10; ++time) {
