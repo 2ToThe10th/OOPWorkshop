@@ -50,10 +50,26 @@ int GCD(int first, int second) {
 
 void BubbleSort(StatisticInt* start_of_array, StatisticInt number_of_elements) {
   for (StatisticInt i = 1; i < number_of_elements; ++i) {
-    for (StatisticInt j = 1; j < number_of_elements - i; ++j) {
+    for (StatisticInt j = 1; j < number_of_elements - i + 1; ++j) {
       if (start_of_array[j - 1] > start_of_array[j]) {
         std::swap(start_of_array[j - 1], start_of_array[j]);
       }
+    }
+  }
+}
+
+void SelectionSort(StatisticInt* start_of_array, StatisticInt number_of_elements) {
+  for (StatisticInt i = 1; i < number_of_elements; ++i) {
+    int min_element = start_of_array[i];
+    int min_index = i;
+    for (StatisticInt j = i + 1; j < number_of_elements; ++j) {
+      if (start_of_array[j] < min_element) {
+        min_element = start_of_array[j];
+        min_index = j;
+      }
+    }
+    if (min_index > i) {
+      std::swap(start_of_array[i], start_of_array[min_index]);
     }
   }
 }
