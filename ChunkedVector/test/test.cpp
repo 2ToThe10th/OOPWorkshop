@@ -192,11 +192,6 @@ template<typename T>
 void CheckAll(std::vector<T> &vector_from_std, ChunkedVector<T, 20> &chunked_vector) {
   ASSERT_EQ(vector_from_std.size(), chunked_vector.Size());
   ASSERT_EQ(vector_from_std.empty(), chunked_vector.Empty());
-//  std::cout << vector_from_std.size() << "\n";
-//  for (size_t i = 0; i < vector_from_std.size(); ++i) {
-//    std::cout << vector_from_std[i] << "  " << chunked_vector[i] << '\n';
-//  }
-//  std::cout << "END" << std::endl;
   for (size_t i = 0; i < vector_from_std.size(); ++i) {
     ASSERT_EQ(vector_from_std[i], chunked_vector[i]);
   }
@@ -369,3 +364,98 @@ TEST(ChunkedVector, AllOnIntSpeedTest) {
   std::cout << "ChunkedVector: " <<  rusage.ru_utime.tv_sec * (long long)1e6 + rusage.ru_utime.tv_usec  - time_start << std::endl;
 }
 
+TEST(ChunkedVector, Reset) {
+  ChunkedVector<int, 10> first(500);
+  for (size_t i = 0; i < first.Size(); ++i) {
+    first[i] = i;
+  }
+  for (size_t i = 0; i < first.Size(); ++i) {
+    ASSERT_EQ(first[i], i);
+  }
+  first.Reset();
+  ASSERT_EQ(first.Size(), 0);
+}
+
+TEST(ChunkedVector, CopyConstructor) {
+  ChunkedVector<int, 10> first(500);
+  for (size_t i = 0; i < first.Size(); ++i) {
+    first[i] = i;
+  }
+  for (size_t i = 0; i < first.Size(); ++i) {
+    ASSERT_EQ(first[i], i);
+  }
+  ChunkedVector<int, 10> second(first);
+  ASSERT_EQ(second.Size(), 500);
+  for (size_t i = 0; i < first.Size(); ++i) {
+    ASSERT_EQ(second[i], i);
+  }
+  ASSERT_EQ(first.Size(), 500);
+  for (size_t i = 0; i < first.Size(); ++i) {
+    ASSERT_EQ(first[i], i);
+  }
+}
+
+TEST(ChunkedVector, MoveConstructor) {
+  ChunkedVector<int, 10> first(500);
+  for (size_t i = 0; i < first.Size(); ++i) {
+    first[i] = i;
+  }
+  for (size_t i = 0; i < first.Size(); ++i) {
+    ASSERT_EQ(first[i], i);
+  }
+  ChunkedVector<int, 10> second(std::move(first));
+  ASSERT_EQ(second.Size(), 500);
+  for (size_t i = 0; i < first.Size(); ++i) {
+    ASSERT_EQ(second[i], i);
+  }
+  ASSERT_EQ(first.Size(), 0);
+}
+
+TEST(ChunkedVector, Copy) {
+  ChunkedVector<int, 10> first(500);
+  for (size_t i = 0; i < first.Size(); ++i) {
+    first[i] = i;
+  }
+  for (size_t i = 0; i < first.Size(); ++i) {
+    ASSERT_EQ(first[i], i);
+  }
+  ChunkedVector<int, 10> second(5);
+  for (size_t i = 0; i < second.Size(); ++i) {
+    second[i] = i + 1000;
+  }
+  for (size_t i = 0; i < second.Size(); ++i) {
+    ASSERT_EQ(second[i], i + 1000);
+  }
+  second = first;
+  ASSERT_EQ(second.Size(), 500);
+  for (size_t i = 0; i < second.Size(); ++i) {
+    ASSERT_EQ(second[i], i);
+  }
+  ASSERT_EQ(first.Size(), 500);
+  for (size_t i = 0; i < first.Size(); ++i) {
+    ASSERT_EQ(first[i], i);
+  }
+}
+
+TEST(ChunkedVector, Move) {
+  ChunkedVector<int, 10> first(500);
+  for (size_t i = 0; i < first.Size(); ++i) {
+    first[i] = i;
+  }
+  for (size_t i = 0; i < first.Size(); ++i) {
+    ASSERT_EQ(first[i], i);
+  }
+  ChunkedVector<int, 10> second(5);
+  for (size_t i = 0; i < second.Size(); ++i) {
+    second[i] = i + 1000;
+  }
+  for (size_t i = 0; i < second.Size(); ++i) {
+    ASSERT_EQ(second[i], i + 1000);
+  }
+  second = std::move(first);
+  ASSERT_EQ(second.Size(), 500);
+  for (size_t i = 0; i < second.Size(); ++i) {
+    ASSERT_EQ(second[i], i);
+  }
+  ASSERT_EQ(first.Size(), 0);
+}

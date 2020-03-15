@@ -3,7 +3,7 @@
 int main() {
 
   PlotBuilder<100> plot_builder(1);
-  //plot_builder[0].SetWindowSize({1820, 1000});
+  // plot_builder[0].SetWindowSize({1820, 1000});
 
   ChunkedVector<sf::Vector2u, 100> vec;
 
@@ -42,7 +42,8 @@ int main() {
 
   }
 
-  sf::RenderWindow window(sf::VideoMode(1000, 800), "SFML works!", sf::Style::Close);
+  sf::RenderWindow window(sf::VideoMode(1000, 800), "SFML works!",
+sf::Style::Close);
 
   while (window.isOpen()) {
     sf::Event event;

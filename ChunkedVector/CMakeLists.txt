@@ -12,7 +12,7 @@ include_directories(test)
 set(SOURCE_DEBUG_FILES test/test.cpp)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDEBUG=1")
 
-set(SOURCE_FILES src/main.cpp)
+set(SOURCE_FILES src/main.cpp src/ChunkedVector.hpp src/ChunkedVector.cpp)
 
 add_executable(ChunkedVector ${SOURCE_FILES} ${SOURCE_DEBUG_FILES})
 target_link_libraries(ChunkedVector gtest gtest_main)
