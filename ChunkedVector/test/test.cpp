@@ -1,11 +1,11 @@
-#include <gtest/gtest.h>
 #include "../src/ChunkedVector.hpp"
-#include <vector>
-#include <random>
-#include <unistd.h>
-#include <sys/resource.h>
-#include <../../StatisticInt/StatisticInt.h>
 #include <../../StatisticInt/Statistic.h>
+#include <../../StatisticInt/StatisticInt.h>
+#include <gtest/gtest.h>
+#include <random>
+#include <sys/resource.h>
+#include <unistd.h>
+#include <vector>
 
 TEST(ChunkedVector, InitializeOneArray) {
   StatisticInt::GetStatistic().MakeEmpty();
@@ -188,8 +188,9 @@ TEST(ChunkedVector, ResizeDecreaseAndIncreaseInitialize) {
   ASSERT_EQ(StatisticInt::GetStatistic().GetNumberOfConstructor(), 1);
 }
 
-template<typename T>
-void CheckAll(std::vector<T> &vector_from_std, ChunkedVector<T, 20> &chunked_vector) {
+template <typename T>
+void CheckAll(std::vector<T> &vector_from_std,
+              ChunkedVector<T, 20> &chunked_vector) {
   ASSERT_EQ(vector_from_std.size(), chunked_vector.Size());
   ASSERT_EQ(vector_from_std.empty(), chunked_vector.Empty());
   for (size_t i = 0; i < vector_from_std.size(); ++i) {
@@ -201,7 +202,11 @@ void CheckAll(std::vector<T> &vector_from_std, ChunkedVector<T, 20> &chunked_vec
   }
 }
 
-const int MAX_FOR_RANDOM = 1e3;
+#ifdef NDEBUG
+const int MAX_FOR_RANDOM = 1e4;
+#else
+const int MAX_FOR_RANDOM = 1e2;
+#endif
 
 TEST(ChunkedVector, AllOnInt) {
   for (int time = 0; time < 10; ++time) {
@@ -237,7 +242,8 @@ TEST(ChunkedVector, AllOnInt) {
         chunked_vector.EmplaceBack(random_number);
       }
       CheckAll(vector_from_std, chunked_vector);
-      int number_of_pop_back = std::min<int>(vector_from_std.size(), 4 * range(random_generator));
+      int number_of_pop_back =
+          std::min<int>(vector_from_std.size(), 4 * range(random_generator));
       for (int i = 0; i < number_of_pop_back; ++i) {
         vector_from_std.pop_back();
         chunked_vector.PopBack();
@@ -278,7 +284,8 @@ TEST(ChunkedVector, AllOnString) {
         chunked_vector.EmplaceBack("trev vc ");
       }
       CheckAll(vector_from_std, chunked_vector);
-      int number_of_pop_back = std::min<int>(vector_from_std.size(), 4 * range(random_generator));
+      int number_of_pop_back =
+          std::min<int>(vector_from_std.size(), 4 * range(random_generator));
       for (int i = 0; i < number_of_pop_back; ++i) {
         vector_from_std.pop_back();
         chunked_vector.PopBack();
@@ -314,16 +321,21 @@ TEST(STDVector, AllOnIntSpeedTest) {
         int random_number = range(random_generator);
         vector_from_std.emplace_back(random_number);
       }
-      int number_of_pop_back = std::min<int>(vector_from_std.size(), 4 * range(random_generator));
+      int number_of_pop_back =
+          std::min<int>(vector_from_std.size(), 4 * range(random_generator));
       for (int i = 0; i < number_of_pop_back; ++i) {
         vector_from_std.pop_back();
       }
     }
   }
 
-  long long time_start = rusage.ru_utime.tv_sec * (long long)1e6 + rusage.ru_utime.tv_usec;
+  long long time_start =
+      rusage.ru_utime.tv_sec * (long long)1e6 + rusage.ru_utime.tv_usec;
   getrusage(RUSAGE_SELF, &rusage);
-  std::cout << "std::vector: " <<  rusage.ru_utime.tv_sec * (long long)1e6 + rusage.ru_utime.tv_usec  - time_start << std::endl;
+  std::cout << "std::vector: "
+            << rusage.ru_utime.tv_sec * (long long)1e6 +
+                   rusage.ru_utime.tv_usec - time_start
+            << std::endl;
 }
 
 TEST(ChunkedVector, AllOnIntSpeedTest) {
@@ -352,16 +364,21 @@ TEST(ChunkedVector, AllOnIntSpeedTest) {
         int random_number = range(random_generator);
         chunked_vector.EmplaceBack(random_number);
       }
-      int number_of_pop_back = std::min<int>(chunked_vector.Size(), 4 * range(random_generator));
+      int number_of_pop_back =
+          std::min<int>(chunked_vector.Size(), 4 * range(random_generator));
       for (int i = 0; i < number_of_pop_back; ++i) {
         chunked_vector.PopBack();
       }
     }
   }
 
-  long long time_start = rusage.ru_utime.tv_sec * (long long)1e6 + rusage.ru_utime.tv_usec;
+  long long time_start =
+      rusage.ru_utime.tv_sec * (long long)1e6 + rusage.ru_utime.tv_usec;
   getrusage(RUSAGE_SELF, &rusage);
-  std::cout << "ChunkedVector: " <<  rusage.ru_utime.tv_sec * (long long)1e6 + rusage.ru_utime.tv_usec  - time_start << std::endl;
+  std::cout << "ChunkedVector: "
+            << rusage.ru_utime.tv_sec * (long long)1e6 +
+                   rusage.ru_utime.tv_usec - time_start
+            << std::endl;
 }
 
 TEST(ChunkedVector, Reset) {
@@ -459,3 +476,50 @@ TEST(ChunkedVector, Move) {
   }
   ASSERT_EQ(first.Size(), 0);
 }
+
+#ifndef NDEBUG
+TEST(ChunkedVectorNDEBUG, OkCanary) {
+  auto *first = new ChunkedVector<int, 10>(500);
+  ASSERT_EQ(first->Ok(), true);
+  struct FakeChunkedVector {
+    FakeChunkedVector *pointer_on_chunked_vector_;
+    int *pointer_on_small_array_;
+    size_t size_;
+  } * fake_chanked_vector;
+  fake_chanked_vector = (FakeChunkedVector *)first;
+  *(uint64_t *)((char *)fake_chanked_vector->pointer_on_chunked_vector_
+                    ->pointer_on_chunked_vector_->pointer_on_small_array_ -
+                sizeof(uint64_t)) = 7;
+  ASSERT_DEATH(first->EmplaceBack(3), std::string());
+}
+
+TEST(ChunkedVectorNDEBUG, OkSize) {
+  auto *first = new ChunkedVector<int, 10>(5000);
+  ASSERT_EQ(first->Ok(), true);
+  struct FakeChunkedVector {
+    FakeChunkedVector *pointer_on_chunked_vector_;
+    int *pointer_on_small_array_;
+    size_t size_;
+  } * fake_chanked_vector;
+  fake_chanked_vector = (FakeChunkedVector *)first;
+  fake_chanked_vector->pointer_on_chunked_vector_->pointer_on_chunked_vector_
+      ->pointer_on_chunked_vector_->size_ = 1000;
+  ASSERT_DEATH(first->EmplaceBack(3), std::string());
+}
+
+TEST(ChunkedVectorNDEBUG, OkBoth) {
+  auto *first = new ChunkedVector<int, 10>(5000);
+  ASSERT_EQ(first->Ok(), true);
+  struct FakeChunkedVector {
+    FakeChunkedVector *pointer_on_chunked_vector_;
+    void *pointer_on_small_array_;
+    size_t size_;
+  } * fake_chanked_vector;
+  fake_chanked_vector = (FakeChunkedVector *)first;
+  fake_chanked_vector->pointer_on_chunked_vector_->pointer_on_chunked_vector_
+      ->pointer_on_chunked_vector_->size_ = 1000;
+  *(uint64_t *)(fake_chanked_vector->pointer_on_chunked_vector_
+  - sizeof(uint64_t)) = 7;
+  std::cout << first->GetDump() << std::endl;
+}
+#endif

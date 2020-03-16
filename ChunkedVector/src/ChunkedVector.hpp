@@ -9,6 +9,11 @@
 #include <cstdlib>
 #include <type_traits>
 
+#ifndef NDEBUG
+#include <cstdint>
+#include <string>
+#endif
+
 template <typename T, size_t allocate_memory_for_one_time, class Enable = void>
 class ChunkedVector;
 
@@ -70,12 +75,13 @@ public:
   inline void Swap(ChunkedVector &other);
 
 private:
-  ChunkedVector<void *, allocate_memory_for_one_time>
-      *pointer_on_chunked_vector_ = nullptr;
-  T *pointer_on_small_array_ = nullptr;
-  size_t size_ = 0;
+  inline T *AllocateNewChunk() const;
 
-  inline size_t NumberOfNeededBlocks(size_t size);
+  inline void FreeChunk(T *chunk_pointer) const;
+
+  inline void FreeChunk(void *chunk_pointer) const;
+
+  inline size_t NumberOfNeededBlocks(size_t size) const;
 
   inline T *AtPointer(size_t index);
 
@@ -86,6 +92,44 @@ private:
   inline void IncreaseSizeToWithoutImplement(size_t new_size);
 
   inline void DecreaseSizeTo(size_t new_size);
+
+private:
+  ChunkedVector<void *, allocate_memory_for_one_time>
+      *pointer_on_chunked_vector_ = nullptr;
+  T *pointer_on_small_array_ = nullptr;
+  size_t size_ = 0;
+
+#ifndef NDEBUG
+public:
+  bool CheckVectorAndWriteDump() const;
+
+  bool Ok() const; // return true if struct is Ok
+
+  std::string GetDump(size_t level = 0) const;
+
+private:
+  void CheckServiceVector(
+      ChunkedVector<void *, allocate_memory_for_one_time> *chunked_vector,
+      std::string &dump, std::string &tabs, size_t level) const;
+
+  void CheckServiceVectorChunk(
+      ChunkedVector<void *, allocate_memory_for_one_time> *chunked_vector,
+      std::string &dump, std::string &tabs) const;
+
+  bool CheckServiceVectorSize(
+      ChunkedVector<void *, allocate_memory_for_one_time> *chunked_vector,
+      std::string &dump, std::string &tabs) const;
+
+  bool CheckChunk(T *chunk_pointer) const; // return true if canary is Ok
+
+  bool CheckChunk(void *chunk_pointer) const; // return true if canary is Ok
+
+  std::string GetDumpChunk(void *chunk_pointer) const;
+
+  std::string GetDumpChunk(T *chunk_pointer) const;
+
+  inline uint64_t GetCanary(char *memory) const;
+#endif
 };
 
 #include "ChunkedVector.cpp"
